@@ -112,24 +112,25 @@ if terreno_etapa:
                     })
                     st.success(f"Etapa '{nombre_etapa}' registrada exitosamente para el cultivo '{cultivo_seleccionado}' en el terreno '{terreno_etapa}'.")
 
-# Sección de visualización de registros actuales
-st.header("Visualización de Registros de Cultivos y Etapas")
+# Sección de visualización completa
+st.header("Visualizador de Registros Completos")
 
-if st.button("Mostrar Registros"):
-    registros = []
-    for i, terreno in enumerate(datos_registro['Terreno']):
-        for cultivo in datos_registro['Cultivos'][i]:
-            for etapa in cultivo['Etapas']:
-                registros.append({
-                    'Terreno': terreno,
-                    'Cultivo': cultivo['Nombre del Cultivo'],
-                    'Etapa': etapa['Etapa'],
-                    'Fecha Inicio': etapa['Fecha Inicio'],
-                    'Fecha Fin': etapa['Fecha Fin']
-                })
-    
-    if registros:
-        df = pd.DataFrame(registros)
-        st.dataframe(df)
-    else:
-        st.info("No hay registros disponibles para mostrar.")
+registros_completos = []
+for i, terreno in enumerate(datos_registro['Terreno']):
+    for cultivo in datos_registro['Cultivos'][i]:
+        for etapa in cultivo['Etapas']:
+            registros_completos.append({
+                'Terreno': terreno,
+                'Ubicación': datos_registro['Ubicación'][i],
+                'Cultivo': cultivo['Nombre del Cultivo'],
+                'Forma': 'Dibujada' if datos_registro['Forma'][i] is not None else 'No registrada',
+                'Etapa': etapa['Etapa'],
+                'Fecha Inicio': etapa['Fecha Inicio'],
+                'Fecha Fin': etapa['Fecha Fin']
+            })
+
+if registros_completos:
+    df_completo = pd.DataFrame(registros_completos)
+    st.dataframe(df_completo)
+else:
+    st.info("No hay registros completos disponibles para visualizar.")
