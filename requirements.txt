@@ -1,4 +1,6 @@
 streamlit
 pandas
+openpyxl
+xlsxwriter
+Pillow
 streamlit-drawable-canvas
-pillow

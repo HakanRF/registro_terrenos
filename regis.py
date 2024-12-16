@@ -2,6 +2,9 @@ import streamlit as st
 import pandas as pd
 import datetime
 import streamlit_drawable_canvas as canvas
+import base64
+from io import BytesIO
+from PIL import Image
 
 # Configurar la página de Streamlit
 st.set_page_config(page_title="Registro de Cultivos", layout="wide")
@@ -16,23 +19,31 @@ if 'datos_registro' not in st.session_state:
         'Ubicación': [],
         'Metraje (hectáreas)': [],
         'Forma': [],
-        'Cultivos': [],  # Almacena los cultivos para cada terreno
+        'Cultivos': [],
         'Abono': [],
         'Fertilizante': []
     }
 
 datos_registro = st.session_state['datos_registro']
 
-# Crear pestañas con Streamlit
-menu = st.tabs(["Registro", "Actualización", "Dashboard General"])
+# Función para convertir imagen a base64
+def convertir_imagen_base64(image_data):
+    if image_data is not None:
+        img = Image.fromarray(image_data)
+        buffered = BytesIO()
+        img.save(buffered, format="PNG")
+        return base64.b64encode(buffered.getvalue()).decode()
+    return None
 
 # -----------------------
 # Pestaña 1: Registro
 # -----------------------
+menu = st.tabs(["Registro", "Actualización", "Dashboard General", "Exportar Datos"])
+
 with menu[0]:
     st.header("Registro de Terreno y Cultivo")
     col1, col2 = st.columns(2)
-    
+
     with col1:
         terreno = st.text_input("Nombre del Terreno")
         ubicacion = st.text_input("Ubicación del Terreno")
@@ -40,7 +51,7 @@ with menu[0]:
         cultivo = st.text_input("Cultivo")
         abono = st.number_input("Sacos de Abono", min_value=0, step=1)
         fertilizante = st.number_input("Sacos de Fertilizante (Wuano)", min_value=0, step=1)
-    
+
     with col2:
         st.text("Dibuja la forma del terreno")
         forma = canvas.st_canvas(
@@ -53,17 +64,14 @@ with menu[0]:
             drawing_mode="freedraw",
             key="canvas_forma_terreno"
         )
-    
+
     if st.button("Registrar Terreno y Cultivo"):
         if terreno and ubicacion and metraje > 0 and cultivo:
             datos_registro['Terreno'].append(terreno)
             datos_registro['Ubicación'].append(ubicacion)
             datos_registro['Metraje (hectáreas)'].append(metraje)
-            datos_registro['Forma'].append(forma.image_data if forma.image_data is not None else None)
-            datos_registro['Cultivos'].append([{
-                'Nombre del Cultivo': cultivo,
-                'Etapas': []
-            }])
+            datos_registro['Forma'].append(convertir_imagen_base64(forma.image_data))
+            datos_registro['Cultivos'].append([{'Nombre del Cultivo': cultivo, 'Etapas': []}])
             datos_registro['Abono'].append(abono)
             datos_registro['Fertilizante'].append(fertilizante)
             st.success(f"Terreno '{terreno}' con cultivo '{cultivo}' registrado exitosamente.")
@@ -71,68 +79,33 @@ with menu[0]:
             st.error("Por favor, complete todos los campos obligatorios del terreno y cultivo.")
 
 # -----------------------
-# Pestaña 2: Actualización
+# Pestaña 4: Exportar Datos
 # -----------------------
-with menu[1]:
-    st.header("Actualizar Etapas de Manejo")
-    terreno_seleccionado = st.selectbox("Seleccione el Terreno", options=datos_registro['Terreno'], key="selectbox_actualizar_terreno")
-    if terreno_seleccionado:
-        index_terreno = datos_registro['Terreno'].index(terreno_seleccionado)
-        cultivos_terreno = [c['Nombre del Cultivo'] for c in datos_registro['Cultivos'][index_terreno]]
-        cultivo_seleccionado = st.selectbox("Seleccione el Cultivo", options=cultivos_terreno, key="selectbox_actualizar_cultivo")
-        
-        if cultivo_seleccionado:
-            nombre_etapa = st.selectbox("Nombre de la Etapa", ["Preparación", "Siembra", "Crecimiento", "Fertilización", "Cosecha"], key="selectbox_nombre_etapa")
-            fecha_inicio = st.date_input("Fecha de Inicio")
-            fecha_fin = st.date_input("Fecha de Fin")
-            actividad = st.text_area("Actividad Realizada")
+with menu[3]:
+    st.header("Exportar Datos a Excel")
+    if st.button("Exportar a Excel"):
+        registros = []
+        for i, terreno in enumerate(datos_registro['Terreno']):
+            registros.append({
+                'Terreno': terreno,
+                'Ubicación': datos_registro['Ubicación'][i],
+                'Metraje (hectáreas)': datos_registro['Metraje (hectáreas)'][i],
+                'Sacos de Abono': datos_registro['Abono'][i],
+                'Sacos de Fertilizante (Wuano)': datos_registro['Fertilizante'][i],
+                'Forma (Base64)': datos_registro['Forma'][i]
+            })
 
-            if st.button("Actualizar Etapa"):
-                for cultivo in datos_registro['Cultivos'][index_terreno]:
-                    if cultivo['Nombre del Cultivo'] == cultivo_seleccionado:
-                        cultivo['Etapas'].append({
-                            'Etapa': nombre_etapa,
-                            'Fecha Inicio': fecha_inicio,
-                            'Fecha Fin': fecha_fin,
-                            'Actividad': actividad
-                        })
-                        st.success(f"Etapa '{nombre_etapa}' con actividad actualizada exitosamente para el cultivo '{cultivo_seleccionado}'.")
+        df = pd.DataFrame(registros)
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False, sheet_name="Registro de Cultivos")
+        st.success("Datos exportados correctamente.")
 
-# -----------------------
-# Pestaña 3: Dashboard General
-# -----------------------
-with menu[2]:
-    st.header("Dashboard General del Registro")
-    if not datos_registro['Terreno']:
-        st.info("No hay registros disponibles.")
-    else:
-        terreno_dashboard = st.selectbox("Seleccione un Terreno para visualizar sus etapas de manejo", options=datos_registro['Terreno'], key="selectbox_dashboard")
-        index_terreno = datos_registro['Terreno'].index(terreno_dashboard)
-        registros_completos = []
-
-        for cultivo in datos_registro['Cultivos'][index_terreno]:
-            for etapa in cultivo['Etapas']:
-                registros_completos.append({
-                    'Terreno': terreno_dashboard,
-                    'Cultivo': cultivo['Nombre del Cultivo'],
-                    'Etapa': etapa['Etapa'],
-                    'Fecha Inicio': etapa['Fecha Inicio'],
-                    'Fecha Fin': etapa['Fecha Fin'],
-                    'Actividad': etapa['Actividad']
-                })
-
-        if registros_completos:
-            df_dashboard = pd.DataFrame(registros_completos)
-            st.dataframe(df_dashboard)
-            st.subheader("Información del Terreno")
-            st.write(f"**Ubicación:** {datos_registro['Ubicación'][index_terreno]}")
-            st.write(f"**Metraje (hectáreas):** {datos_registro['Metraje (hectáreas)'][index_terreno]}")
-            st.write(f"**Sacos de Abono:** {datos_registro['Abono'][index_terreno]}")
-            st.write(f"**Sacos de Fertilizante (Wuano):** {datos_registro['Fertilizante'][index_terreno]}")
-
-            st.subheader("Visualización de la Forma del Terreno")
-            forma = datos_registro['Forma'][index_terreno]
-            if forma is not None:
-                st.image(forma, caption=f"Forma del Terreno: {terreno_dashboard}")
-        else:
-            st.info("No hay etapas de manejo registradas para este terreno.")
+        # Descargar archivo
+        output.seek(0)
+        st.download_button(
+            label="Descargar Excel",
+            data=output,
+            file_name="registro_cultivos.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
