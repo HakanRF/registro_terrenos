@@ -21,7 +21,8 @@ if 'datos_registro' not in st.session_state:
         'Forma': [],
         'Cultivos': [],
         'Abono': [],
-        'Fertilizante': []
+        'Fertilizante': [],
+        'Semilla (Toneladas)': []
     }
 
 datos_registro = st.session_state['datos_registro']
@@ -51,6 +52,7 @@ with menu[0]:
         cultivo = st.text_input("Cultivo")
         abono = st.number_input("Sacos de Abono", min_value=0, step=1)
         fertilizante = st.number_input("Sacos de Fertilizante (Wuano)", min_value=0, step=1)
+        semilla = st.number_input("Semilla Ingresada (Toneladas)", min_value=0.0, step=0.1)
 
     with col2:
         st.text("Dibuja la forma del terreno")
@@ -74,6 +76,7 @@ with menu[0]:
             datos_registro['Cultivos'].append([{'Nombre del Cultivo': cultivo, 'Etapas': []}])
             datos_registro['Abono'].append(abono)
             datos_registro['Fertilizante'].append(fertilizante)
+            datos_registro['Semilla (Toneladas)'].append(semilla)
             st.success(f"Terreno '{terreno}' con cultivo '{cultivo}' registrado exitosamente.")
         else:
             st.error("Por favor, complete todos los campos obligatorios del terreno y cultivo.")
@@ -95,55 +98,24 @@ with menu[1]:
             fecha_fin = st.date_input("Fecha de Fin")
             actividad = st.text_area("Actividad Realizada")
 
+            if nombre_etapa == "Cosecha":
+                kilos_cosechados = st.number_input("Kilos Cosechados", min_value=0.0, step=1.0)
+            else:
+                kilos_cosechados = None
+
             if st.button("Actualizar Etapa"):
                 for cultivo in datos_registro['Cultivos'][index_terreno]:
                     if cultivo['Nombre del Cultivo'] == cultivo_seleccionado:
-                        cultivo['Etapas'].append({
+                        etapa_data = {
                             'Etapa': nombre_etapa,
                             'Fecha Inicio': fecha_inicio.strftime('%Y-%m-%d'),
                             'Fecha Fin': fecha_fin.strftime('%Y-%m-%d'),
                             'Actividad': actividad
-                        })
-                        st.success(f"Etapa '{nombre_etapa}' con actividad '{actividad}' actualizada exitosamente.")
-    else:
-        st.info("No hay terrenos registrados aún. Registre un terreno primero.")
-
-# -----------------------
-# Pestaña 3: Dashboard General
-# -----------------------
-with menu[2]:
-    st.header("Dashboard General del Registro")
-    if datos_registro['Terreno']:
-        terreno_dashboard = st.selectbox("Seleccione un Terreno", options=datos_registro['Terreno'])
-        index_terreno = datos_registro['Terreno'].index(terreno_dashboard)
-        registros = []
-
-        for cultivo in datos_registro['Cultivos'][index_terreno]:
-            for etapa in cultivo['Etapas']:
-                registros.append({
-                    'Terreno': terreno_dashboard,
-                    'Cultivo': cultivo['Nombre del Cultivo'],
-                    'Etapa': etapa['Etapa'],
-                    'Fecha Inicio': etapa['Fecha Inicio'],
-                    'Fecha Fin': etapa['Fecha Fin'],
-                    'Actividad': etapa['Actividad']
-                })
-
-        if registros:
-            df_dashboard = pd.DataFrame(registros)
-            st.dataframe(df_dashboard)
-            st.subheader("Información del Terreno")
-            st.write(f"**Ubicación:** {datos_registro['Ubicación'][index_terreno]}")
-            st.write(f"**Metraje (hectáreas):** {datos_registro['Metraje (hectáreas)'][index_terreno]}")
-            st.write(f"**Sacos de Abono:** {datos_registro['Abono'][index_terreno]}")
-            st.write(f"**Sacos de Fertilizante (Wuano):** {datos_registro['Fertilizante'][index_terreno]}")
-
-            st.subheader("Visualización de la Forma del Terreno")
-            forma = datos_registro['Forma'][index_terreno]
-            if forma:
-                st.image(Image.open(BytesIO(base64.b64decode(forma))), caption=f"Forma del Terreno: {terreno_dashboard}")
-        else:
-            st.info("No hay etapas registradas para este terreno.")
+                        }
+                        if nombre_etapa == "Cosecha":
+                            etapa_data['Kilos Cosechados'] = kilos_cosechados
+                        cultivo['Etapas'].append(etapa_data)
+                        st.success(f"Etapa '{nombre_etapa}' actualizada exitosamente.")
     else:
         st.info("No hay terrenos registrados aún. Registre un terreno primero.")
 
@@ -163,6 +135,7 @@ with menu[3]:
                 'Metraje (hectáreas)': datos_registro['Metraje (hectáreas)'][i],
                 'Sacos de Abono': datos_registro['Abono'][i],
                 'Sacos de Fertilizante (Wuano)': datos_registro['Fertilizante'][i],
+                'Semilla (Toneladas)': datos_registro['Semilla (Toneladas)'][i],
                 'Forma (Base64)': datos_registro['Forma'][i] if datos_registro['Forma'][i] else "N/A"
             })
 
@@ -180,3 +153,4 @@ with menu[3]:
             file_name="registro_cultivos.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
+
