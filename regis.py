@@ -10,17 +10,20 @@ st.set_page_config(page_title="Registro de Cultivos", layout="wide")
 # Título de la aplicación
 st.title("Sistema de Registro y Proceso de Cultivos")
 
-# Crear un diccionario para almacenar los registros temporales
-datos_registro = {
-    'Terreno': [],
-    'Ubicación': [],
-    'Metraje (hectáreas)': [],
-    'Forma': [],
-    'Cultivo': [],
-    'Estado del Cultivo': [],
-    'Fecha de Actividad': [],
-    'Actividad Realizada': []
-}
+# Inicializar o cargar el almacenamiento de la sesión
+if 'datos_registro' not in st.session_state:
+    st.session_state['datos_registro'] = {
+        'Terreno': [],
+        'Ubicación': [],
+        'Metraje (hectáreas)': [],
+        'Forma': [],
+        'Cultivo': [],
+        'Estado del Cultivo': [],
+        'Fecha de Actividad': [],
+        'Actividad Realizada': []
+    }
+
+datos_registro = st.session_state['datos_registro']
 
 # Sección de registro de terreno
 st.header("Registro de Terreno")
