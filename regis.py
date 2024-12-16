@@ -4,12 +4,29 @@ import datetime
 import streamlit_drawable_canvas as canvas
 import os
 import json
+import base64
+from io import BytesIO
+from PIL import Image
 
 # Configurar la página de Streamlit
 st.set_page_config(page_title="Registro de Cultivos", layout="wide")
 
 # Título de la aplicación
 st.title("Sistema de Registro y Proceso de Cultivos")
+
+# Funciones auxiliares para manejar imagenes Base64
+def convertir_a_base64(imagen_data):
+    if imagen_data is not None:
+        buffered = BytesIO()
+        Image.fromarray(imagen_data).save(buffered, format="PNG")
+        return base64.b64encode(buffered.getvalue()).decode('utf-8')
+    return None
+
+def cargar_desde_base64(base64_string):
+    if base64_string:
+        image_data = base64.b64decode(base64_string)
+        return Image.open(BytesIO(image_data))
+    return None
 
 # Cargar copia de seguridad al iniciar la aplicación con manejo de errores
 if os.path.exists('copia_seguridad.json'):
@@ -75,7 +92,7 @@ with menu[0]:
                 datos_registro['Terreno'].append(terreno)
                 datos_registro['Ubicación'].append(ubicacion)
                 datos_registro['Metraje (hectáreas)'].append(metraje)
-                datos_registro['Forma'].append(forma.image_data if forma.image_data is not None else None)
+                datos_registro['Forma'].append(convertir_a_base64(forma.image_data))
                 datos_registro['Cultivos'].append([{
                     'Nombre del Cultivo': cultivo,
                     'Etapas': []
@@ -139,9 +156,10 @@ with menu[2]:
             df_dashboard = pd.DataFrame(registros_completos)
             st.dataframe(df_dashboard)
             st.subheader("Visualización de la Forma del Terreno")
-            forma = datos_registro['Forma'][index_terreno]
-            if forma is not None:
-                st.image(forma, caption=f"Forma del Terreno: {terreno_dashboard}")
+            forma_base64 = datos_registro['Forma'][index_terreno]
+            if forma_base64:
+                imagen = cargar_desde_base64(forma_base64)
+                st.image(imagen, caption=f"Forma del Terreno: {terreno_dashboard}")
         else:
             st.info("No hay etapas de manejo registradas para este terreno.")
 
