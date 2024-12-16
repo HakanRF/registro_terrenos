@@ -2,8 +2,6 @@ import streamlit as st
 import pandas as pd
 import datetime
 import streamlit_drawable_canvas as canvas
-import os
-import json
 
 # Configurar la página de Streamlit
 st.set_page_config(page_title="Registro de Cultivos", layout="wide")
@@ -11,29 +9,16 @@ st.set_page_config(page_title="Registro de Cultivos", layout="wide")
 # Título de la aplicación
 st.title("Sistema de Registro y Proceso de Cultivos")
 
-# Cargar copia de seguridad al iniciar la aplicación con manejo de errores
-if os.path.exists('copia_seguridad.json'):
-    try:
-        with open('copia_seguridad.json', 'r') as f:
-            data = json.load(f)
-            if isinstance(data, dict):
-                st.session_state['datos_registro'] = data
-            else:
-                raise ValueError("Formato incorrecto en copia_seguridad.json")
-    except (json.JSONDecodeError, ValueError):
-        st.warning("El archivo de copia de seguridad estaba vacío o corrupto. Se inicializarán datos nuevos.")
-        st.session_state['datos_registro'] = {
-            'Terreno': [],
-            'Ubicación': [],
-            'Metraje (hectáreas)': [],
-            'Cultivos': []
-        }
-else:
+# Inicializar o cargar el almacenamiento de la sesión
+if 'datos_registro' not in st.session_state:
     st.session_state['datos_registro'] = {
         'Terreno': [],
         'Ubicación': [],
         'Metraje (hectáreas)': [],
-        'Cultivos': []
+        'Forma': [],
+        'Cultivos': [],  # Almacena los cultivos para cada terreno
+        'Abono': [],
+        'Fertilizante': []
     }
 
 datos_registro = st.session_state['datos_registro']
@@ -53,9 +38,11 @@ with menu[0]:
         ubicacion = st.text_input("Ubicación del Terreno")
         metraje = st.number_input("Metraje (en hectáreas)", min_value=0.0, step=0.1)
         cultivo = st.text_input("Nombre del Cultivo")
+        abono = st.number_input("Sacos de Abono", min_value=0, step=1)
+        fertilizante = st.number_input("Sacos de Fertilizante", min_value=0, step=1)
     
     with col2:
-        st.text("Dibuja la forma del terreno (solo visualización, no se guardará)")
+        st.text("Dibuja la forma del terreno")
         forma = canvas.st_canvas(
             fill_color="#ffffff",
             stroke_width=2,
@@ -69,17 +56,19 @@ with menu[0]:
     
     if st.button("Registrar Terreno y Cultivo"):
         if terreno and ubicacion and metraje > 0 and cultivo:
-            if terreno not in datos_registro['Terreno']:
-                datos_registro['Terreno'].append(terreno)
-                datos_registro['Ubicación'].append(ubicacion)
-                datos_registro['Metraje (hectáreas)'].append(metraje)
-                datos_registro['Cultivos'].append([{
-                    'Nombre del Cultivo': cultivo,
-                    'Etapas': []
-                }])
-                st.success(f"Terreno '{terreno}' con cultivo '{cultivo}' registrado exitosamente.")
-            else:
-                st.error("El terreno ya está registrado. Use un nombre de terreno diferente.")
+            datos_registro['Terreno'].append(terreno)
+            datos_registro['Ubicación'].append(ubicacion)
+            datos_registro['Metraje (hectáreas)'].append(metraje)
+            datos_registro['Forma'].append(forma.image_data if forma.image_data is not None else None)
+            datos_registro['Cultivos'].append([{
+                'Nombre del Cultivo': cultivo,
+                'Etapas': []
+            }])
+            datos_registro['Abono'].append(abono)
+            datos_registro['Fertilizante'].append(fertilizante)
+            st.success(f"Terreno '{terreno}' con cultivo '{cultivo}' registrado exitosamente.")
+        else:
+            st.error("Por favor, complete todos los campos obligatorios del terreno y cultivo.")
 
 # -----------------------
 # Pestaña 2: Actualización
@@ -135,16 +124,15 @@ with menu[2]:
         if registros_completos:
             df_dashboard = pd.DataFrame(registros_completos)
             st.dataframe(df_dashboard)
+            st.subheader("Información del Terreno")
+            st.write(f"**Ubicación:** {datos_registro['Ubicación'][index_terreno]}")
+            st.write(f"**Metraje (hectáreas):** {datos_registro['Metraje (hectáreas)'][index_terreno]}")
+            st.write(f"**Sacos de Abono:** {datos_registro['Abono'][index_terreno]}")
+            st.write(f"**Sacos de Fertilizante:** {datos_registro['Fertilizante'][index_terreno]}")
+
             st.subheader("Visualización de la Forma del Terreno")
-            st.text("La forma del terreno no se guarda y solo es visible en la sección de registro.")
+            forma = datos_registro['Forma'][index_terreno]
+            if forma is not None:
+                st.image(forma, caption=f"Forma del Terreno: {terreno_dashboard}")
         else:
             st.info("No hay etapas de manejo registradas para este terreno.")
-
-# Guardar copia de seguridad cada vez que se registra o actualiza
-with open('copia_seguridad.json', 'w') as f:
-    json.dump({
-        'Terreno': datos_registro['Terreno'],
-        'Ubicación': datos_registro['Ubicación'],
-        'Metraje (hectáreas)': datos_registro['Metraje (hectáreas)'],
-        'Cultivos': datos_registro['Cultivos']
-    }, f)
