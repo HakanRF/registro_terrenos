@@ -11,19 +11,31 @@ st.set_page_config(page_title="Registro de Cultivos", layout="wide")
 # Título de la aplicación
 st.title("Sistema de Registro y Proceso de Cultivos")
 
-# Cargar copia de seguridad al iniciar la aplicación
+# Cargar copia de seguridad al iniciar la aplicación con manejo de errores
 if os.path.exists('copia_seguridad.json'):
-    with open('copia_seguridad.json', 'r') as f:
-        st.session_state['datos_registro'] = json.load(f)
-
-# Inicializar o cargar el almacenamiento de la sesión
-if 'datos_registro' not in st.session_state:
+    try:
+        with open('copia_seguridad.json', 'r') as f:
+            data = json.load(f)
+            if isinstance(data, dict):
+                st.session_state['datos_registro'] = data
+            else:
+                raise ValueError("Formato incorrecto en copia_seguridad.json")
+    except (json.JSONDecodeError, ValueError):
+        st.warning("El archivo de copia de seguridad estaba vacío o corrupto. Se inicializarán datos nuevos.")
+        st.session_state['datos_registro'] = {
+            'Terreno': [],
+            'Ubicación': [],
+            'Metraje (hectáreas)': [],
+            'Forma': [],
+            'Cultivos': []
+        }
+else:
     st.session_state['datos_registro'] = {
         'Terreno': [],
         'Ubicación': [],
         'Metraje (hectáreas)': [],
         'Forma': [],
-        'Cultivos': []  # Almacena los cultivos para cada terreno
+        'Cultivos': []
     }
 
 datos_registro = st.session_state['datos_registro']
