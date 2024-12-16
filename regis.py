@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import datetime
 import streamlit_drawable_canvas as canvas
+import os
+import json
 
 # Configurar la página de Streamlit
 st.set_page_config(page_title="Registro de Cultivos", layout="wide")
@@ -9,14 +11,29 @@ st.set_page_config(page_title="Registro de Cultivos", layout="wide")
 # Título de la aplicación
 st.title("Sistema de Registro y Proceso de Cultivos")
 
-# Inicializar o cargar el almacenamiento de la sesión
-if 'datos_registro' not in st.session_state:
+# Cargar copia de seguridad al iniciar la aplicación con manejo de errores
+if os.path.exists('copia_seguridad.json'):
+    try:
+        with open('copia_seguridad.json', 'r') as f:
+            data = json.load(f)
+            if isinstance(data, dict):
+                st.session_state['datos_registro'] = data
+            else:
+                raise ValueError("Formato incorrecto en copia_seguridad.json")
+    except (json.JSONDecodeError, ValueError):
+        st.warning("El archivo de copia de seguridad estaba vacío o corrupto. Se inicializarán datos nuevos.")
+        st.session_state['datos_registro'] = {
+            'Terreno': [],
+            'Ubicación': [],
+            'Metraje (hectáreas)': [],
+            'Cultivos': []
+        }
+else:
     st.session_state['datos_registro'] = {
         'Terreno': [],
         'Ubicación': [],
         'Metraje (hectáreas)': [],
-        'Forma': [],
-        'Cultivos': []  # Almacena los cultivos para cada terreno
+        'Cultivos': []
     }
 
 datos_registro = st.session_state['datos_registro']
@@ -38,7 +55,7 @@ with menu[0]:
         cultivo = st.text_input("Nombre del Cultivo")
     
     with col2:
-        st.text("Dibuja la forma del terreno")
+        st.text("Dibuja la forma del terreno (solo visualización, no se guardará)")
         forma = canvas.st_canvas(
             fill_color="#ffffff",
             stroke_width=2,
@@ -52,17 +69,17 @@ with menu[0]:
     
     if st.button("Registrar Terreno y Cultivo"):
         if terreno and ubicacion and metraje > 0 and cultivo:
-            datos_registro['Terreno'].append(terreno)
-            datos_registro['Ubicación'].append(ubicacion)
-            datos_registro['Metraje (hectáreas)'].append(metraje)
-            datos_registro['Forma'].append(forma.image_data if forma.image_data is not None else None)
-            datos_registro['Cultivos'].append([{
-                'Nombre del Cultivo': cultivo,
-                'Etapas': []
-            }])
-            st.success(f"Terreno '{terreno}' con cultivo '{cultivo}' registrado exitosamente.")
-        else:
-            st.error("Por favor, complete todos los campos obligatorios del terreno y cultivo.")
+            if terreno not in datos_registro['Terreno']:
+                datos_registro['Terreno'].append(terreno)
+                datos_registro['Ubicación'].append(ubicacion)
+                datos_registro['Metraje (hectáreas)'].append(metraje)
+                datos_registro['Cultivos'].append([{
+                    'Nombre del Cultivo': cultivo,
+                    'Etapas': []
+                }])
+                st.success(f"Terreno '{terreno}' con cultivo '{cultivo}' registrado exitosamente.")
+            else:
+                st.error("El terreno ya está registrado. Use un nombre de terreno diferente.")
 
 # -----------------------
 # Pestaña 2: Actualización
@@ -119,10 +136,15 @@ with menu[2]:
             df_dashboard = pd.DataFrame(registros_completos)
             st.dataframe(df_dashboard)
             st.subheader("Visualización de la Forma del Terreno")
-            forma = datos_registro['Forma'][index_terreno]
-            if forma is not None:
-                st.image(forma, caption=f"Forma del Terreno: {terreno_dashboard}")
+            st.text("La forma del terreno no se guarda y solo es visible en la sección de registro.")
         else:
             st.info("No hay etapas de manejo registradas para este terreno.")
 
-
+# Guardar copia de seguridad cada vez que se registra o actualiza
+with open('copia_seguridad.json', 'w') as f:
+    json.dump({
+        'Terreno': datos_registro['Terreno'],
+        'Ubicación': datos_registro['Ubicación'],
+        'Metraje (hectáreas)': datos_registro['Metraje (hectáreas)'],
+        'Cultivos': datos_registro['Cultivos']
+    }, f)
