@@ -65,14 +65,11 @@ with menu[0]:
     terreno_seleccionado = st.selectbox("Seleccione el Terreno", options=datos_registro['Terreno'], key="selectbox_terreno_cultivo")
     if terreno_seleccionado:
         cultivo = st.text_input("Cultivo Sembrado")
-        estado_cultivo = st.selectbox("Estado del Cultivo", ["Preparación", "Siembra", "Crecimiento", "Fertilización", "Cosecha"], key="selectbox_estado_cultivo")
-
         if st.button("Registrar Cultivo"):
             if cultivo:
                 index = datos_registro['Terreno'].index(terreno_seleccionado)
                 datos_registro['Cultivos'][index].append({
                     'Nombre del Cultivo': cultivo,
-                    'Estado': estado_cultivo,
                     'Etapas': []
                 })
                 st.success(f"Cultivo '{cultivo}' registrado exitosamente en el terreno '{terreno_seleccionado}'.")
@@ -112,30 +109,26 @@ with menu[1]:
 # -----------------------
 with menu[2]:
     st.header("Dashboard General del Registro")
-    registros_completos = []
+    if not datos_registro['Terreno']:
+        st.info("No hay registros disponibles.")
+    else:
+        terreno_dashboard = st.selectbox("Seleccione un Terreno para visualizar sus etapas de manejo", options=datos_registro['Terreno'], key="selectbox_dashboard")
+        index_terreno = datos_registro['Terreno'].index(terreno_dashboard)
+        registros_completos = []
 
-    for i, terreno in enumerate(datos_registro['Terreno']):
-        for cultivo in datos_registro['Cultivos'][i]:
+        for cultivo in datos_registro['Cultivos'][index_terreno]:
             for etapa in cultivo['Etapas']:
                 registros_completos.append({
-                    'Terreno': terreno,
-                    'Ubicación': datos_registro['Ubicación'][i],
-                    'Metraje (hectáreas)': datos_registro['Metraje (hectáreas)'][i],
+                    'Terreno': terreno_dashboard,
                     'Cultivo': cultivo['Nombre del Cultivo'],
-                    'Estado': cultivo['Estado'],
                     'Etapa': etapa['Etapa'],
                     'Fecha Inicio': etapa['Fecha Inicio'],
                     'Fecha Fin': etapa['Fecha Fin'],
                     'Actividad': etapa['Actividad']
                 })
 
-    if registros_completos:
-        df_dashboard = pd.DataFrame(registros_completos)
-        st.dataframe(df_dashboard)
-
-        st.subheader("Resumen General")
-        st.write(f"**Total de Terrenos:** {len(datos_registro['Terreno'])}")
-        st.write(f"**Total de Cultivos:** {sum(len(c) for c in datos_registro['Cultivos'])}")
-        st.write(f"**Total de Etapas Registradas:** {sum(len(c['Etapas']) for cultivos in datos_registro['Cultivos'] for c in cultivos)}")
-    else:
-        st.info("No hay registros disponibles para mostrar en el dashboard.")
+        if registros_completos:
+            df_dashboard = pd.DataFrame(registros_completos)
+            st.dataframe(df_dashboard)
+        else:
+            st.info("No hay etapas de manejo registradas para este terreno.")
