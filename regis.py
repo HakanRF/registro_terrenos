@@ -22,16 +22,17 @@ if 'datos_registro' not in st.session_state:
 datos_registro = st.session_state['datos_registro']
 
 # Crear pestañas con Streamlit
-menu = st.tabs(["Registro de Terrenos", "Registro de Cultivos", "Registro de Etapas", "Actualizar Terreno", "Dashboard"])
+menu = st.tabs(["Registro", "Actualización", "Dashboard General"])
 
 # -----------------------
-# Pestaña 1: Registro de Terrenos
+# Pestaña 1: Registro
 # -----------------------
 with menu[0]:
-    st.header("Registro de Terreno")
+    st.header("Registro de Terrenos y Cultivos")
     col1, col2 = st.columns(2)
     
     with col1:
+        st.subheader("Registro de Terreno")
         terreno = st.text_input("Nombre del Terreno")
         ubicacion = st.text_input("Ubicación del Terreno")
         metraje = st.number_input("Metraje (en hectáreas)", min_value=0.0, step=0.1)
@@ -48,7 +49,7 @@ with menu[0]:
             drawing_mode="freedraw",
             key="canvas_forma_terreno"
         )
-
+    
     if st.button("Registrar Terreno"):
         if terreno and ubicacion and metraje > 0:
             datos_registro['Terreno'].append(terreno)
@@ -60,23 +61,7 @@ with menu[0]:
         else:
             st.error("Por favor, complete todos los campos obligatorios del terreno.")
 
-    st.header("Lista de Terrenos Registrados")
-    if datos_registro['Terreno']:
-        df_terrenos = pd.DataFrame({
-            'Terreno': datos_registro['Terreno'],
-            'Ubicación': datos_registro['Ubicación'],
-            'Metraje (hectáreas)': datos_registro['Metraje (hectáreas)']
-        })
-        st.dataframe(df_terrenos)
-    else:
-        st.info("No hay terrenos registrados actualmente.")
-
-# -----------------------
-# Pestaña 2: Registro de Cultivos
-# -----------------------
-with menu[1]:
-    st.header("Registro de Cultivo")
-
+    st.subheader("Registro de Cultivo")
     terreno_seleccionado = st.selectbox("Seleccione el Terreno", options=datos_registro['Terreno'], key="selectbox_terreno_cultivo")
     if terreno_seleccionado:
         cultivo = st.text_input("Cultivo Sembrado")
@@ -95,36 +80,9 @@ with menu[1]:
                 st.error("Por favor, complete todos los campos obligatorios del cultivo.")
 
 # -----------------------
-# Pestaña 3: Registro de Etapas
+# Pestaña 2: Actualización
 # -----------------------
-with menu[2]:
-    st.header("Registro de Etapas de Manejo del Cultivo")
-
-    terreno_etapa = st.selectbox("Seleccione el Terreno", options=datos_registro['Terreno'], key="selectbox_terreno_etapa")
-    if terreno_etapa:
-        index_terreno = datos_registro['Terreno'].index(terreno_etapa)
-        cultivos_terreno = [c['Nombre del Cultivo'] for c in datos_registro['Cultivos'][index_terreno]]
-        cultivo_seleccionado = st.selectbox("Seleccione el Cultivo", options=cultivos_terreno, key="selectbox_cultivo_etapa")
-        
-        if cultivo_seleccionado:
-            nombre_etapa = st.text_input("Nombre de la Etapa")
-            fecha_inicio = st.date_input("Fecha de Inicio")
-            fecha_fin = st.date_input("Fecha de Fin")
-            
-            if st.button("Registrar Etapa"):
-                for cultivo in datos_registro['Cultivos'][index_terreno]:
-                    if cultivo['Nombre del Cultivo'] == cultivo_seleccionado:
-                        cultivo['Etapas'].append({
-                            'Etapa': nombre_etapa,
-                            'Fecha Inicio': fecha_inicio,
-                            'Fecha Fin': fecha_fin
-                        })
-                        st.success(f"Etapa '{nombre_etapa}' registrada exitosamente para el cultivo '{cultivo_seleccionado}'.")
-
-# -----------------------
-# Pestaña 4: Actualizar Terrenos
-# -----------------------
-with menu[3]:
+with menu[1]:
     st.header("Actualizar Datos del Terreno")
     terreno_seleccionado = st.selectbox("Seleccione el Terreno a Actualizar", options=datos_registro['Terreno'], key="selectbox_actualizar_terreno")
     
@@ -152,19 +110,21 @@ with menu[3]:
             st.success(f"Terreno '{terreno_seleccionado}' actualizado exitosamente.")
 
 # -----------------------
-# Pestaña 5: Dashboard
+# Pestaña 3: Dashboard General
 # -----------------------
-with menu[4]:
-    st.header("Dashboard de Registros")
-    
+with menu[2]:
+    st.header("Dashboard General del Registro")
     registros_completos = []
+
     for i, terreno in enumerate(datos_registro['Terreno']):
         for cultivo in datos_registro['Cultivos'][i]:
             for etapa in cultivo['Etapas']:
                 registros_completos.append({
                     'Terreno': terreno,
                     'Ubicación': datos_registro['Ubicación'][i],
+                    'Metraje (hectáreas)': datos_registro['Metraje (hectáreas)'][i],
                     'Cultivo': cultivo['Nombre del Cultivo'],
+                    'Estado': cultivo['Estado'],
                     'Etapa': etapa['Etapa'],
                     'Fecha Inicio': etapa['Fecha Inicio'],
                     'Fecha Fin': etapa['Fecha Fin']
@@ -173,10 +133,10 @@ with menu[4]:
     if registros_completos:
         df_dashboard = pd.DataFrame(registros_completos)
         st.dataframe(df_dashboard)
-        
+
         st.subheader("Resumen General")
         st.write(f"**Total de Terrenos:** {len(datos_registro['Terreno'])}")
         st.write(f"**Total de Cultivos:** {sum(len(c) for c in datos_registro['Cultivos'])}")
         st.write(f"**Total de Etapas Registradas:** {sum(len(c['Etapas']) for cultivos in datos_registro['Cultivos'] for c in cultivos)}")
     else:
-        st.info("No hay registros disponibles para visualizar en el dashboard.")
+        st.info("No hay registros disponibles para mostrar en el dashboard.")
