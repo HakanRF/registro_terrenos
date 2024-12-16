@@ -165,4 +165,18 @@ with menu[4]:
                     'Terreno': terreno,
                     'Ubicación': datos_registro['Ubicación'][i],
                     'Cultivo': cultivo['Nombre del Cultivo'],
-                    'Forma': '
+                    'Etapa': etapa['Etapa'],
+                    'Fecha Inicio': etapa['Fecha Inicio'],
+                    'Fecha Fin': etapa['Fecha Fin']
+                })
+
+    if registros_completos:
+        df_dashboard = pd.DataFrame(registros_completos)
+        st.dataframe(df_dashboard)
+        
+        st.subheader("Resumen General")
+        st.write(f"**Total de Terrenos:** {len(datos_registro['Terreno'])}")
+        st.write(f"**Total de Cultivos:** {sum(len(c) for c in datos_registro['Cultivos'])}")
+        st.write(f"**Total de Etapas Registradas:** {sum(len(c['Etapas']) for cultivos in datos_registro['Cultivos'] for c in cultivos)}")
+    else:
+        st.info("No hay registros disponibles para visualizar en el dashboard.")
