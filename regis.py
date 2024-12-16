@@ -28,59 +28,41 @@ menu = st.tabs(["Registro", "Actualización", "Dashboard General"])
 # Pestaña 1: Registro
 # -----------------------
 with menu[0]:
-    st.header("Registro de Terrenos y Cultivos")
-    sub_menu = st.tabs(["Terreno", "Cultivo"])
-
-    # Registro de Terreno
-    with sub_menu[0]:
-        st.subheader("Registro de Terreno")
-        col1, col2 = st.columns(2)
+    st.header("Registro de Terreno y Cultivo")
+    col1, col2 = st.columns(2)
     
-        with col1:
-            terreno = st.text_input("Nombre del Terreno")
-            ubicacion = st.text_input("Ubicación del Terreno")
-            metraje = st.number_input("Metraje (en hectáreas)", min_value=0.0, step=0.1)
+    with col1:
+        terreno = st.text_input("Nombre del Terreno")
+        ubicacion = st.text_input("Ubicación del Terreno")
+        metraje = st.number_input("Metraje (en hectáreas)", min_value=0.0, step=0.1)
+        cultivo = st.text_input("Nombre del Cultivo")
     
-        with col2:
-            st.text("Dibuja la forma del terreno")
-            forma = canvas.st_canvas(
-                fill_color="#ffffff",
-                stroke_width=2,
-                stroke_color="#000000",
-                background_color="#eeeeee",
-                width=300,
-                height=300,
-                drawing_mode="freedraw",
-                key="canvas_forma_terreno"
-            )
+    with col2:
+        st.text("Dibuja la forma del terreno")
+        forma = canvas.st_canvas(
+            fill_color="#ffffff",
+            stroke_width=2,
+            stroke_color="#000000",
+            background_color="#eeeeee",
+            width=300,
+            height=300,
+            drawing_mode="freedraw",
+            key="canvas_forma_terreno"
+        )
     
-        if st.button("Registrar Terreno"):
-            if terreno and ubicacion and metraje > 0:
-                datos_registro['Terreno'].append(terreno)
-                datos_registro['Ubicación'].append(ubicacion)
-                datos_registro['Metraje (hectáreas)'].append(metraje)
-                datos_registro['Forma'].append(forma.image_data if forma.image_data is not None else None)
-                datos_registro['Cultivos'].append([])
-                st.success(f"Terreno '{terreno}' registrado exitosamente.")
-            else:
-                st.error("Por favor, complete todos los campos obligatorios del terreno.")
-
-    # Registro de Cultivo
-    with sub_menu[1]:
-        st.subheader("Registro de Cultivo")
-        terreno_seleccionado = st.selectbox("Seleccione el Terreno", options=datos_registro['Terreno'], key="selectbox_terreno_cultivo")
-        if terreno_seleccionado:
-            cultivo = st.text_input("Cultivo Sembrado")
-            if st.button("Registrar Cultivo"):
-                if cultivo:
-                    index = datos_registro['Terreno'].index(terreno_seleccionado)
-                    datos_registro['Cultivos'][index].append({
-                        'Nombre del Cultivo': cultivo,
-                        'Etapas': []
-                    })
-                    st.success(f"Cultivo '{cultivo}' registrado exitosamente en el terreno '{terreno_seleccionado}'.")
-                else:
-                    st.error("Por favor, complete todos los campos obligatorios del cultivo.")
+    if st.button("Registrar Terreno y Cultivo"):
+        if terreno and ubicacion and metraje > 0 and cultivo:
+            datos_registro['Terreno'].append(terreno)
+            datos_registro['Ubicación'].append(ubicacion)
+            datos_registro['Metraje (hectáreas)'].append(metraje)
+            datos_registro['Forma'].append(forma.image_data if forma.image_data is not None else None)
+            datos_registro['Cultivos'].append([{
+                'Nombre del Cultivo': cultivo,
+                'Etapas': []
+            }])
+            st.success(f"Terreno '{terreno}' con cultivo '{cultivo}' registrado exitosamente.")
+        else:
+            st.error("Por favor, complete todos los campos obligatorios del terreno y cultivo.")
 
 # -----------------------
 # Pestaña 2: Actualización
