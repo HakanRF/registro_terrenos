@@ -146,3 +146,37 @@ with menu[2]:
             st.info("No hay etapas registradas para este terreno.")
     else:
         st.info("No hay terrenos registrados aún. Registre un terreno primero.")
+
+# -----------------------
+# Pestaña 4: Exportar Datos
+# -----------------------
+with menu[3]:
+    st.header("Exportar Datos a Excel")
+    if not datos_registro['Terreno']:
+        st.info("No hay datos disponibles para exportar.")
+    else:
+        registros = []
+        for i, terreno in enumerate(datos_registro['Terreno']):
+            registros.append({
+                'Terreno': terreno,
+                'Ubicación': datos_registro['Ubicación'][i],
+                'Metraje (hectáreas)': datos_registro['Metraje (hectáreas)'][i],
+                'Sacos de Abono': datos_registro['Abono'][i],
+                'Sacos de Fertilizante (Wuano)': datos_registro['Fertilizante'][i],
+                'Forma (Base64)': datos_registro['Forma'][i] if datos_registro['Forma'][i] else "N/A"
+            })
+
+        df = pd.DataFrame(registros)
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False, sheet_name="Registro de Cultivos")
+        st.success("Datos exportados correctamente.")
+
+        # Descargar archivo
+        output.seek(0)
+        st.download_button(
+            label="Descargar Excel",
+            data=output,
+            file_name="registro_cultivos.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
