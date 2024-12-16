@@ -27,13 +27,20 @@ if 'datos_registro' not in st.session_state:
 
 datos_registro = st.session_state['datos_registro']
 
-# Función para convertir imagen a base64
+# Funciones auxiliares
 def convertir_imagen_base64(image_data):
+    """Convierte una imagen a formato base64 para su almacenamiento."""
     if image_data is not None:
         img = Image.fromarray(image_data)
         buffered = BytesIO()
         img.save(buffered, format="PNG")
         return base64.b64encode(buffered.getvalue()).decode()
+    return None
+
+def decodificar_imagen_base64(base64_data):
+    """Decodifica una imagen en base64 para mostrarla."""
+    if base64_data:
+        return Image.open(BytesIO(base64.b64decode(base64_data)))
     return None
 
 # -----------------------
@@ -116,6 +123,43 @@ with menu[1]:
                             etapa_data['Kilos Cosechados'] = kilos_cosechados
                         cultivo['Etapas'].append(etapa_data)
                         st.success(f"Etapa '{nombre_etapa}' actualizada exitosamente.")
+    else:
+        st.info("No hay terrenos registrados aún. Registre un terreno primero.")
+
+# -----------------------
+# Pestaña 3: Dashboard General
+# -----------------------
+with menu[2]:
+    st.header("Dashboard General del Registro")
+    if datos_registro['Terreno']:
+        terreno_dashboard = st.selectbox("Seleccione un Terreno", options=datos_registro['Terreno'])
+        index_terreno = datos_registro['Terreno'].index(terreno_dashboard)
+
+        registros = []
+        for cultivo in datos_registro['Cultivos'][index_terreno]:
+            for etapa in cultivo['Etapas']:
+                registro = {
+                    'Terreno': terreno_dashboard,
+                    'Cultivo': cultivo['Nombre del Cultivo'],
+                    'Etapa': etapa['Etapa'],
+                    'Fecha Inicio': etapa['Fecha Inicio'],
+                    'Fecha Fin': etapa['Fecha Fin'],
+                    'Actividad': etapa['Actividad']
+                }
+                if 'Kilos Cosechados' in etapa:
+                    registro['Kilos Cosechados'] = etapa['Kilos Cosechados']
+                registros.append(registro)
+
+        if registros:
+            df_dashboard = pd.DataFrame(registros)
+            st.dataframe(df_dashboard)
+
+            st.subheader("Visualización de la Forma del Terreno")
+            forma = decodificar_imagen_base64(datos_registro['Forma'][index_terreno])
+            if forma:
+                st.image(forma, caption=f"Forma del Terreno: {terreno_dashboard}")
+        else:
+            st.info("No hay etapas registradas para este terreno.")
     else:
         st.info("No hay terrenos registrados aún. Registre un terreno primero.")
 
