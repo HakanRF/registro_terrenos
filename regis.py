@@ -117,7 +117,10 @@ with menu[2]:
     if not datos_registro['Terreno']:
         st.info("No hay registros disponibles.")
     else:
-        terreno_dashboard = st.selectbox("Seleccione un Terreno para visualizar sus etapas de manejo", options=datos_registro['Terreno'], key="selectbox_dashboard")
+        terreno_dashboard = st.selectbox(
+            "Seleccione un Terreno para visualizar sus etapas de manejo",
+            options=datos_registro['Terreno'], key="selectbox_dashboard"
+        )
         index_terreno = datos_registro['Terreno'].index(terreno_dashboard)
         registros_completos = []
 
@@ -135,17 +138,20 @@ with menu[2]:
         if registros_completos:
             df_dashboard = pd.DataFrame(registros_completos)
             st.dataframe(df_dashboard)
+
+            # Mostrar la forma del terreno (no guardada en la copia de seguridad)
             st.subheader("Visualización de la Forma del Terreno")
-            st.text("La forma del terreno no se guarda y solo es visible en la sección de registro.")
+            st.text("La forma del terreno es temporal y no se guarda en la copia de seguridad.")
+            st.text("Dibuja la forma nuevamente para visualizarla aquí.")
+            forma_dashboard = canvas.st_canvas(
+                fill_color="#ffffff",
+                stroke_width=2,
+                stroke_color="#000000",
+                background_color="#eeeeee",
+                width=300,
+                height=300,
+                drawing_mode="freedraw",
+                key="canvas_dashboard_forma"
+            )
         else:
             st.info("No hay etapas de manejo registradas para este terreno.")
-
-# Guardar copia de seguridad cada vez que se registra o actualiza
-with open('copia_seguridad.json', 'w') as f:
-    json.dump({
-        'Terreno': datos_registro['Terreno'],
-        'Ubicación': datos_registro['Ubicación'],
-        'Metraje (hectáreas)': datos_registro['Metraje (hectáreas)'],
-        'Cultivos': datos_registro['Cultivos']
-    }, f)
-
