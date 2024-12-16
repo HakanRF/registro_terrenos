@@ -4,29 +4,12 @@ import datetime
 import streamlit_drawable_canvas as canvas
 import os
 import json
-import base64
-from io import BytesIO
-from PIL import Image
 
 # Configurar la página de Streamlit
 st.set_page_config(page_title="Registro de Cultivos", layout="wide")
 
 # Título de la aplicación
 st.title("Sistema de Registro y Proceso de Cultivos")
-
-# Funciones auxiliares para manejar imagenes Base64
-def convertir_a_base64(imagen_data):
-    if imagen_data is not None:
-        buffered = BytesIO()
-        Image.fromarray(imagen_data).save(buffered, format="PNG")
-        return base64.b64encode(buffered.getvalue()).decode('utf-8')
-    return None
-
-def cargar_desde_base64(base64_string):
-    if base64_string:
-        image_data = base64.b64decode(base64_string)
-        return Image.open(BytesIO(image_data))
-    return None
 
 # Cargar copia de seguridad al iniciar la aplicación con manejo de errores
 if os.path.exists('copia_seguridad.json'):
@@ -43,7 +26,6 @@ if os.path.exists('copia_seguridad.json'):
             'Terreno': [],
             'Ubicación': [],
             'Metraje (hectáreas)': [],
-            'Forma': [],
             'Cultivos': []
         }
 else:
@@ -51,7 +33,6 @@ else:
         'Terreno': [],
         'Ubicación': [],
         'Metraje (hectáreas)': [],
-        'Forma': [],
         'Cultivos': []
     }
 
@@ -74,7 +55,7 @@ with menu[0]:
         cultivo = st.text_input("Nombre del Cultivo")
     
     with col2:
-        st.text("Dibuja la forma del terreno")
+        st.text("Dibuja la forma del terreno (solo visualización, no se guardará)")
         forma = canvas.st_canvas(
             fill_color="#ffffff",
             stroke_width=2,
@@ -92,7 +73,6 @@ with menu[0]:
                 datos_registro['Terreno'].append(terreno)
                 datos_registro['Ubicación'].append(ubicacion)
                 datos_registro['Metraje (hectáreas)'].append(metraje)
-                datos_registro['Forma'].append(convertir_a_base64(forma.image_data))
                 datos_registro['Cultivos'].append([{
                     'Nombre del Cultivo': cultivo,
                     'Etapas': []
@@ -156,13 +136,16 @@ with menu[2]:
             df_dashboard = pd.DataFrame(registros_completos)
             st.dataframe(df_dashboard)
             st.subheader("Visualización de la Forma del Terreno")
-            forma_base64 = datos_registro['Forma'][index_terreno]
-            if forma_base64:
-                imagen = cargar_desde_base64(forma_base64)
-                st.image(imagen, caption=f"Forma del Terreno: {terreno_dashboard}")
+            st.text("La forma del terreno no se guarda y solo es visible en la sección de registro.")
         else:
             st.info("No hay etapas de manejo registradas para este terreno.")
 
 # Guardar copia de seguridad cada vez que se registra o actualiza
 with open('copia_seguridad.json', 'w') as f:
-    json.dump(st.session_state['datos_registro'], f)
+    json.dump({
+        'Terreno': datos_registro['Terreno'],
+        'Ubicación': datos_registro['Ubicación'],
+        'Metraje (hectáreas)': datos_registro['Metraje (hectáreas)'],
+        'Cultivos': datos_registro['Cultivos']
+    }, f)
+
