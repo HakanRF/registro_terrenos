@@ -22,7 +22,7 @@ if 'datos_registro' not in st.session_state:
         'Cultivos': [],
         'Abono': [],
         'Fertilizante': [],
-        'Semilla (Toneladas)': []
+        'Semilla (Kilos)': []
     }
 
 datos_registro = st.session_state['datos_registro']
@@ -52,7 +52,7 @@ with menu[0]:
         cultivo = st.text_input("Cultivo")
         abono = st.number_input("Sacos de Abono", min_value=0, step=1)
         fertilizante = st.number_input("Sacos de Fertilizante (Wuano)", min_value=0, step=1)
-        semilla = st.number_input("Semilla Ingresada (Toneladas)", min_value=0.0, step=0.1)
+        semilla = st.number_input("Semilla Ingresada (Kilos)", min_value=0.0, step=1.0)
 
     with col2:
         st.text("Dibuja la forma del terreno")
@@ -76,7 +76,7 @@ with menu[0]:
             datos_registro['Cultivos'].append([{'Nombre del Cultivo': cultivo, 'Etapas': []}])
             datos_registro['Abono'].append(abono)
             datos_registro['Fertilizante'].append(fertilizante)
-            datos_registro['Semilla (Toneladas)'].append(semilla)
+            datos_registro['Semilla (Kilos)'].append(semilla)
             st.success(f"Terreno '{terreno}' con cultivo '{cultivo}' registrado exitosamente.")
         else:
             st.error("Por favor, complete todos los campos obligatorios del terreno y cultivo.")
@@ -135,7 +135,7 @@ with menu[3]:
                 'Metraje (hectáreas)': datos_registro['Metraje (hectáreas)'][i],
                 'Sacos de Abono': datos_registro['Abono'][i],
                 'Sacos de Fertilizante (Wuano)': datos_registro['Fertilizante'][i],
-                'Semilla (Toneladas)': datos_registro['Semilla (Toneladas)'][i],
+                'Semilla (Kilos)': datos_registro['Semilla (Kilos)'][i],
                 'Forma (Base64)': datos_registro['Forma'][i] if datos_registro['Forma'][i] else "N/A"
             })
 
