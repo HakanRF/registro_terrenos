@@ -37,9 +37,9 @@ with menu[0]:
         terreno = st.text_input("Nombre del Terreno")
         ubicacion = st.text_input("Ubicación del Terreno")
         metraje = st.number_input("Metraje (en hectáreas)", min_value=0.0, step=0.1)
-        cultivo = st.text_input("Nombre del Cultivo")
+        cultivo = st.text_input("Cultivo")
         abono = st.number_input("Sacos de Abono", min_value=0, step=1)
-        fertilizante = st.number_input("Sacos de Fertilizante", min_value=0, step=1)
+        fertilizante = st.number_input("Sacos de Fertilizante (Wuano)", min_value=0, step=1)
     
     with col2:
         st.text("Dibuja la forma del terreno")
@@ -128,7 +128,7 @@ with menu[2]:
             st.write(f"**Ubicación:** {datos_registro['Ubicación'][index_terreno]}")
             st.write(f"**Metraje (hectáreas):** {datos_registro['Metraje (hectáreas)'][index_terreno]}")
             st.write(f"**Sacos de Abono:** {datos_registro['Abono'][index_terreno]}")
-            st.write(f"**Sacos de Fertilizante:** {datos_registro['Fertilizante'][index_terreno]}")
+            st.write(f"**Sacos de Fertilizante (Wuano):** {datos_registro['Fertilizante'][index_terreno]}")
 
             st.subheader("Visualización de la Forma del Terreno")
             forma = datos_registro['Forma'][index_terreno]
