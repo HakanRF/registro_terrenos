@@ -40,7 +40,7 @@ with col1:
         width=300,
         height=300,
         drawing_mode="freedraw",
-        key="canvas_forma"
+        key="canvas_forma_terreno"
     )
 
     if st.button("Registrar Terreno"):
@@ -71,10 +71,10 @@ with col2:
 # Sección de registro de cultivo
 st.header("Registro de Cultivo")
 
-terreno_seleccionado = st.selectbox("Seleccione el Terreno", options=datos_registro['Terreno'])
+terreno_seleccionado = st.selectbox("Seleccione el Terreno", options=datos_registro['Terreno'], key="selectbox_terreno_cultivo")
 if terreno_seleccionado:
     cultivo = st.text_input("Cultivo Sembrado")
-    estado_cultivo = st.selectbox("Estado del Cultivo", ["Preparación", "Siembra", "Crecimiento", "Fertilización", "Cosecha"])
+    estado_cultivo = st.selectbox("Estado del Cultivo", ["Preparación", "Siembra", "Crecimiento", "Fertilización", "Cosecha"], key="selectbox_estado_cultivo")
 
     if st.button("Registrar Cultivo"):
         if cultivo:
@@ -91,11 +91,11 @@ if terreno_seleccionado:
 # Sección de registro de etapas
 st.header("Registro de Etapas de Manejo del Cultivo")
 
-terreno_etapa = st.selectbox("Seleccione el Terreno", options=datos_registro['Terreno'])
+terreno_etapa = st.selectbox("Seleccione el Terreno", options=datos_registro['Terreno'], key="selectbox_terreno_etapa")
 if terreno_etapa:
     index_terreno = datos_registro['Terreno'].index(terreno_etapa)
     cultivos_terreno = [c['Nombre del Cultivo'] for c in datos_registro['Cultivos'][index_terreno]]
-    cultivo_seleccionado = st.selectbox("Seleccione el Cultivo", options=cultivos_terreno)
+    cultivo_seleccionado = st.selectbox("Seleccione el Cultivo", options=cultivos_terreno, key="selectbox_cultivo_etapa")
     
     if cultivo_seleccionado:
         nombre_etapa = st.text_input("Nombre de la Etapa")
