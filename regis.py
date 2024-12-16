@@ -83,31 +83,29 @@ with menu[0]:
 # Pestaña 2: Actualización
 # -----------------------
 with menu[1]:
-    st.header("Actualizar Datos del Terreno")
-    terreno_seleccionado = st.selectbox("Seleccione el Terreno a Actualizar", options=datos_registro['Terreno'], key="selectbox_actualizar_terreno")
-    
+    st.header("Actualizar Etapas de Manejo")
+    terreno_seleccionado = st.selectbox("Seleccione el Terreno", options=datos_registro['Terreno'], key="selectbox_actualizar_terreno")
     if terreno_seleccionado:
-        index = datos_registro['Terreno'].index(terreno_seleccionado)
-        nueva_ubicacion = st.text_input("Nueva Ubicación", value=datos_registro['Ubicación'][index])
-        nuevo_metraje = st.number_input("Nuevo Metraje (en hectáreas)", value=datos_registro['Metraje (hectáreas)'][index], min_value=0.0, step=0.1)
-        st.text("Actualiza la forma del terreno")
-        nueva_forma = canvas.st_canvas(
-            fill_color="#ffffff",
-            stroke_width=2,
-            stroke_color="#000000",
-            background_color="#eeeeee",
-            width=300,
-            height=300,
-            drawing_mode="freedraw",
-            key="canvas_actualizar_forma"
-        )
+        index_terreno = datos_registro['Terreno'].index(terreno_seleccionado)
+        cultivos_terreno = [c['Nombre del Cultivo'] for c in datos_registro['Cultivos'][index_terreno]]
+        cultivo_seleccionado = st.selectbox("Seleccione el Cultivo", options=cultivos_terreno, key="selectbox_actualizar_cultivo")
+        
+        if cultivo_seleccionado:
+            nombre_etapa = st.text_input("Nombre de la Etapa")
+            fecha_inicio = st.date_input("Fecha de Inicio")
+            fecha_fin = st.date_input("Fecha de Fin")
+            actividad = st.text_area("Actividad Realizada")
 
-        if st.button("Actualizar Terreno"):
-            datos_registro['Ubicación'][index] = nueva_ubicacion
-            datos_registro['Metraje (hectáreas)'][index] = nuevo_metraje
-            if nueva_forma.image_data is not None:
-                datos_registro['Forma'][index] = nueva_forma.image_data
-            st.success(f"Terreno '{terreno_seleccionado}' actualizado exitosamente.")
+            if st.button("Actualizar Etapa"):
+                for cultivo in datos_registro['Cultivos'][index_terreno]:
+                    if cultivo['Nombre del Cultivo'] == cultivo_seleccionado:
+                        cultivo['Etapas'].append({
+                            'Etapa': nombre_etapa,
+                            'Fecha Inicio': fecha_inicio,
+                            'Fecha Fin': fecha_fin,
+                            'Actividad': actividad
+                        })
+                        st.success(f"Etapa '{nombre_etapa}' con actividad actualizada exitosamente para el cultivo '{cultivo_seleccionado}'.")
 
 # -----------------------
 # Pestaña 3: Dashboard General
@@ -127,7 +125,8 @@ with menu[2]:
                     'Estado': cultivo['Estado'],
                     'Etapa': etapa['Etapa'],
                     'Fecha Inicio': etapa['Fecha Inicio'],
-                    'Fecha Fin': etapa['Fecha Fin']
+                    'Fecha Fin': etapa['Fecha Fin'],
+                    'Actividad': etapa['Actividad']
                 })
 
     if registros_completos:
