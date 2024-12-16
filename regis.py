@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import datetime
+import folium
+from streamlit_folium import st_folium
 
 # Configurar la página de Streamlit
 st.set_page_config(page_title="Registro de Cultivos", layout="wide")
@@ -25,7 +27,7 @@ st.header("Registro de Terreno")
 
 # Entradas para el registro del terreno
 terreno = st.text_input("Nombre del Terreno")
-ubicacion = st.text_input("Ubicación del Terreno")
+ubicacion = st.text_input("Ubicación del Terreno (latitud, longitud)")
 metraje = st.number_input("Metraje (en hectáreas)", min_value=0.0, step=0.1)
 forma = st.selectbox("Forma del Terreno", ["Rectangular", "Cuadrado", "Irregular"])
 
@@ -38,6 +40,22 @@ if st.button("Registrar Terreno"):
         st.success(f"Terreno '{terreno}' registrado exitosamente.")
     else:
         st.error("Por favor, complete todos los campos obligatorios del terreno.")
+
+# Sección de visualización del mapa
+st.header("Visualización del Mapa de Terrenos")
+
+# Crear un mapa de Folium
+m = folium.Map(location=[-12.0464, -77.0428], zoom_start=12)
+
+# Agregar marcadores para cada terreno registrado
+for i, ubicacion in enumerate(datos_registro['Ubicación']):
+    try:
+        lat, lon = map(float, ubicacion.split(','))
+        folium.Marker(location=[lat, lon], popup=f"Terreno: {datos_registro['Terreno'][i]}").add_to(m)
+    except ValueError:
+        pass
+
+st_folium(m, width=700, height=500)
 
 # Sección de registro de cultivo
 st.header("Registro de Cultivo")
