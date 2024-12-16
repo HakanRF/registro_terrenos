@@ -132,3 +132,4 @@ with menu[2]:
             st.dataframe(df_dashboard)
         else:
             st.info("No hay etapas de manejo registradas para este terreno.")
+
